@@ -1,0 +1,120 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather-App</title>
+    <link rel="stylesheet" href="Weather.css">
+</head>
+
+<body>
+
+    <nav class="navbar">
+
+        <!-- Logo Image -->
+        <div class="logo">
+            <img src="Images/WhatsApp Image 2026-09-02 at 22.41.54 (1).jpeg" alt="Logo">
+        </div>
+
+        <ul class="nav-links">
+            <li><a href="#">Home</a></li>
+            <li><a href="#">Weather</a></li>
+            <li><a href="#">About</a></li>
+            <li><a href="#">Contact</a></li>
+        </ul>
+
+    </nav>
+
+    <!-- Weather Card -->
+    <div class="card welcome-card">
+        Welcome, Design By Er.Suneel Kumar
+    </div>
+
+    <div class="card">
+
+        <div class="search">
+            <input type="text" placeholder="Enter City Name" spellcheck="false">
+
+            <button>
+                <img src="Images/color search buttton.png" class="img2" alt="Search">
+            </button>
+        </div>
+
+        <div class="weather">
+
+            <img src="Images/normal2.png" class="weather-icon" alt="Weather">
+
+            <h1 class="temp">22 °C</h1>
+            <h2 class="city">New York</h2>
+
+            <div class="details">
+
+                <div class="col1">
+                    <img src="Images/humidity.jfif" class="col-img" alt="Humidity">
+                    <p class="hunmidity">50%</p>
+                    <p>Humidity</p>
+                </div>
+
+                <div class="col1">
+                    <img src="Images/wind.png" class="col-img" alt="Wind">
+                    <p class="wind">15 km/h</p>
+                    <p>Wind</p>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+<script>
+
+const apikey = "3b7b3a4f88fa11f5f00d093f543dc36b";
+
+const apiurl =
+    "https://api.openweathermap.org/data/2.5/weather?units=metric&q=";
+
+const searchbox = document.querySelector(".search input");
+const searchBtn = document.querySelector(".search button");
+
+async function checkweather(city) {
+
+    if (city === "") {
+        return;
+    }
+
+    const response = await fetch(
+        apiurl + city + `&appid=${apikey}`
+    );
+
+    var data = await response.json();
+
+    console.log(data);
+
+    if (data.cod == 404) {
+        document.querySelector(".city").innerHTML = "City not found";
+        return;
+    }
+
+    document.querySelector(".city").innerHTML = data.name;
+
+    document.querySelector(".temp").innerHTML =
+        Math.round(data.main.temp) + "°C";
+
+    document.querySelector(".hunmidity").innerHTML =
+        data.main.humidity + "%";
+
+    document.querySelector(".wind").innerHTML =
+        data.wind.speed + " km/h";
+}
+
+searchBtn.addEventListener("click", () => {
+    checkweather(searchbox.value);
+});
+
+checkweather("Bangalore");
+
+</script>
+
+</body>
+</html>
