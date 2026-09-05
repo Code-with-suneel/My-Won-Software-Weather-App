@@ -1,10 +1,11 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather-App</title>
+
     <link rel="stylesheet" href="Weather.css">
 </head>
 
@@ -12,9 +13,8 @@
 
     <nav class="navbar">
 
-        <!-- Logo Image -->
         <div class="logo">
-            <img src="Images/WhatsApp Image 2026-09-02 at 22.41.54 (1).jpeg" alt="Logo">
+            <img src="WhatsApp Image 2026-09-02 at 22.41.54 (1).jpeg" alt="Logo">
         </div>
 
         <ul class="nav-links">
@@ -26,93 +26,381 @@
 
     </nav>
 
-    <!-- Weather Card -->
+
+    <!-- Welcome Card -->
     <div class="card welcome-card">
         Welcome, Design By Er.Suneel Kumar
     </div>
 
+
+    <!-- Weather Card -->
     <div class="card">
 
         <div class="search">
-            <input type="text" placeholder="Enter City Name" spellcheck="false">
+
+            <input type="text"
+                   placeholder="Enter City / Village Name"
+                   spellcheck="false"
+                   autocomplete="off">
 
             <button>
-                <img src="Images/color search buttton.png" class="img2" alt="Search">
+                <img src="color search buttton.png"
+                     class="img2"
+                     alt="Search">
             </button>
+
         </div>
+
+
+        <!-- Location Search Results -->
+        <div class="location-list"></div>
+
 
         <div class="weather">
 
-            <img src="Images/normal2.png" class="weather-icon" alt="Weather">
+            <img src="normal2.png"
+                 class="weather-icon"
+                 alt="Weather">
 
             <h1 class="temp">22 °C</h1>
-            <h2 class="city">New York</h2>
+
+            <h2 class="city">Bangalore</h2>
+
 
             <div class="details">
 
                 <div class="col1">
-                    <img src="Images/humidity.jfif" class="col-img" alt="Humidity">
+
+                    <img src="humidity.jfif"
+                         class="col-img"
+                         alt="Humidity">
+
                     <p class="hunmidity">50%</p>
+
                     <p>Humidity</p>
+
                 </div>
 
+
                 <div class="col1">
-                    <img src="Images/wind.png" class="col-img" alt="Wind">
+
+                    <img src="Images/wind.png"
+                         class="col-img"
+                         alt="Wind">
+
                     <p class="wind">15 km/h</p>
+
                     <p>Wind</p>
+
                 </div>
 
             </div>
 
         </div>
+
     </div>
+
 
 <script>
 
+
+// ==========================================
+// API KEY
+// ==========================================
+
 const apikey = "3b7b3a4f88fa11f5f00d093f543dc36b";
 
-const apiurl =
-    "https://api.openweathermap.org/data/2.5/weather?units=metric&q=";
+
+// ==========================================
+// HTML ELEMENTS
+// ==========================================
 
 const searchbox = document.querySelector(".search input");
+
 const searchBtn = document.querySelector(".search button");
 
-async function checkweather(city) {
+const locationList = document.querySelector(".location-list");
 
-    if (city === "") {
+
+// ==========================================
+// WEATHER API
+// ==========================================
+
+const weatherApi =
+    "https://api.openweathermap.org/data/2.5/weather";
+
+
+// ==========================================
+// LOCATION SEARCH
+// ==========================================
+
+async function searchLocation(locationName) {
+
+    locationName = locationName.trim();
+
+    if (locationName === "") {
         return;
     }
 
-    const response = await fetch(
-        apiurl + city + `&appid=${apikey}`
-    );
 
-    var data = await response.json();
+    try {
 
-    console.log(data);
+        locationList.innerHTML = "Searching...";
 
-    if (data.cod == 404) {
-        document.querySelector(".city").innerHTML = "City not found";
-        return;
+
+        // Geocoding API
+        const url =
+            `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(locationName)}&limit=10&appid=${apikey}`;
+
+
+        const response = await fetch(url);
+
+
+        if (!response.ok) {
+
+            if (response.status === 401) {
+
+                locationList.innerHTML =
+                    "API Key invalid. Please check your API key.";
+
+                return;
+            }
+
+            throw new Error("Location search failed");
+
+        }
+
+
+        const locations = await response.json();
+
+
+        console.log("Locations:", locations);
+
+
+        // No location found
+        if (locations.length === 0) {
+
+            locationList.innerHTML =
+                "Location not found";
+
+            return;
+        }
+
+
+        // Clear previous results
+        locationList.innerHTML = "";
+
+
+        // Show all matching locations
+        locations.forEach((location) => {
+
+            const item = document.createElement("div");
+
+            item.classList.add("location-item");
+
+
+            // Location name
+            const name = document.createElement("strong");
+
+            name.textContent = location.name;
+
+
+            // State
+            const details = document.createElement("small");
+
+            let locationDetails = "";
+
+            if (location.state) {
+
+                locationDetails += location.state + ", ";
+
+            }
+
+            locationDetails += location.country;
+
+
+            details.textContent = locationDetails;
+
+
+            item.appendChild(name);
+
+            item.appendChild(details);
+
+
+            // Click location
+            item.addEventListener("click", () => {
+
+                getWeather(
+                    location.lat,
+                    location.lon,
+                    location.name,
+                    location.state,
+                    location.country
+                );
+
+            });
+
+
+            locationList.appendChild(item);
+
+        });
+
+
+    }
+    catch (error) {
+
+        console.log(error);
+
+        locationList.innerHTML =
+            "Something went wrong. Please try again.";
+
     }
 
-    document.querySelector(".city").innerHTML = data.name;
-
-    document.querySelector(".temp").innerHTML =
-        Math.round(data.main.temp) + "°C";
-
-    document.querySelector(".hunmidity").innerHTML =
-        data.main.humidity + "%";
-
-    document.querySelector(".wind").innerHTML =
-        data.wind.speed + " km/h";
 }
 
+
+// ==========================================
+// GET WEATHER USING LATITUDE + LONGITUDE
+// ==========================================
+
+async function getWeather(
+    latitude,
+    longitude,
+    locationName,
+    state,
+    country
+) {
+
+
+    try {
+
+        locationList.innerHTML = "";
+
+
+        const url =
+            `${weatherApi}?lat=${latitude}&lon=${longitude}&units=metric&appid=${apikey}`;
+
+
+        const response = await fetch(url);
+
+
+        if (!response.ok) {
+
+            throw new Error("Weather API Error");
+
+        }
+
+
+        const data = await response.json();
+
+
+        console.log("Weather Data:", data);
+
+
+        // ==================================
+        // CITY NAME
+        // ==================================
+
+        let fullLocationName = locationName;
+
+
+        if (state) {
+
+            fullLocationName += ", " + state;
+
+        }
+
+
+        if (country) {
+
+            fullLocationName += ", " + country;
+
+        }
+
+
+        document.querySelector(".city").innerHTML =
+            fullLocationName;
+
+
+        // ==================================
+        // TEMPERATURE
+        // ==================================
+
+        document.querySelector(".temp").innerHTML =
+            Math.round(data.main.temp) + "°C";
+
+
+        // ==================================
+        // HUMIDITY
+        // ==================================
+
+        document.querySelector(".hunmidity").innerHTML =
+            data.main.humidity + "%";
+
+
+        // ==================================
+        // WIND
+        // ==================================
+
+        document.querySelector(".wind").innerHTML =
+            data.wind.speed + " km/h";
+
+
+        // ==================================
+        // WEATHER CONDITION
+        // ==================================
+
+        console.log(
+            "Weather:",
+            data.weather[0].main
+        );
+
+
+    }
+    catch (error) {
+
+        console.log(error);
+
+        document.querySelector(".city").innerHTML =
+            "Weather not available";
+
+    }
+
+}
+
+
+// ==========================================
+// SEARCH BUTTON
+// ==========================================
+
 searchBtn.addEventListener("click", () => {
-    checkweather(searchbox.value);
+
+    searchLocation(searchbox.value);
+
 });
 
-checkweather("Bangalore");
+
+// ==========================================
+// ENTER KEY SEARCH
+// ==========================================
+
+searchbox.addEventListener("keydown", (event) => {
+
+    if (event.key === "Enter") {
+
+        searchLocation(searchbox.value);
+
+    }
+
+});
+
+
+// ==========================================
+// DEFAULT LOCATION
+// ==========================================
+
+searchLocation("Bangalore");
+
 
 </script>
 
